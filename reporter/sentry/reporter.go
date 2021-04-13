@@ -164,16 +164,7 @@ func stringifyTag(v interface{}) string {
 		return ""
 	}
 
-	switch vv := v.(type) {
-	case string:
-		return vv
-	case []byte:
-		return string(vv)
-	case fmt.Stringer:
-		return vv.String()
-	}
-
-	return fmt.Sprint(v)
+	return fmt.Sprintf("%s", v)
 }
 
 func transactionName(tags map[string]interface{}) string {
