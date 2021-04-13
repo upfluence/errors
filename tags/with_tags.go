@@ -14,8 +14,8 @@ func (ws *withTags) Tags() map[string]interface{} {
 }
 
 func WithTags(err error, tags map[string]interface{}) error {
-	if err == nil {
-		return nil
+	if err == nil || len(tags) == 0 {
+		return err
 	}
 
 	return &withTags{cause: err, tags: tags}
