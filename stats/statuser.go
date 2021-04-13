@@ -44,12 +44,20 @@ func GetStatus(err error, opts ...ExtractStatusOption) string {
 		return o.successStatus
 	}
 
-	for ; err != nil; err = base.UnwrapOnce(err) {
+	for {
 		ws, ok := err.(*withStatus)
 
 		if ok {
 			return ws.status
 		}
+
+		cause := base.UnwrapOnce(err)
+
+		if cause == nil {
+			break
+		}
+
+		err = cause
 	}
 
 	return o.fallbackStatuser.Status(err)

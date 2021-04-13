@@ -1,5 +1,7 @@
 package opaque
 
+import "github.com/upfluence/errors/tags"
+
 type opaqueError struct {
 	cause error
 }
@@ -7,13 +9,7 @@ type opaqueError struct {
 func (oe *opaqueError) Error() string { return oe.cause.Error() }
 
 func (oe *opaqueError) Tags() map[string]interface{} {
-	t, ok := oe.cause.(interface{ Tags() map[string]interface{} })
-
-	if !ok {
-		return nil
-	}
-
-	return t.Tags()
+	return tags.GetTags(oe.cause)
 }
 
 func Opaque(err error) error {

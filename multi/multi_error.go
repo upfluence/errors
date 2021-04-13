@@ -1,6 +1,10 @@
 package multi
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/upfluence/errors/tags"
+)
 
 type multiError []error
 
@@ -27,25 +31,23 @@ func (errs multiError) Error() string {
 }
 
 func (errs multiError) Tags() map[string]interface{} {
-	var tags map[string]interface{}
+	var allTags map[string]interface{}
 
 	for _, err := range errs {
-		if t, ok := err.(interface{ Tags() map[string]interface{} }); ok {
-			ts := t.Tags()
+		ts := tags.GetTags(err)
 
-			if len(ts) > 0 && tags == nil {
-				tags = make(map[string]interface{}, len(ts))
-			}
+		if len(ts) > 0 && allTags == nil {
+			allTags = make(map[string]interface{}, len(ts))
+		}
 
-			for k, v := range ts {
-				if _, ok := tags[k]; !ok {
-					tags[k] = v
-				}
+		for k, v := range ts {
+			if _, ok := allTags[k]; !ok {
+				allTags[k] = v
 			}
 		}
 	}
 
-	return tags
+	return allTags
 }
 
 func Wrap(errs []error) error {

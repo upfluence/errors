@@ -28,20 +28,32 @@ func CombineErrorAssertion(eas ...ErrorAssertion) ErrorAssertion {
 	return multiErrorAssertion(eas)
 }
 
-type NoErrorAssertion struct{}
+type noErrorAssertion struct{}
+
+var NoErrorAssertion ErrorAssertion = noErrorAssertion{}
+
+func (noErrorAssertion) Assert(testing.TB, error) {}
+
+type ErrorAssertionFunc func(testing.TB, error)
+
+func (fn ErrorAssertionFunc) Assert(t testing.TB, err error) { fn(t, err) }
 
 func NoError(msgAndArgs ...interface{}) ErrorAssertion {
-	return func(t testing.TB, err error) { assert.Nil(t, err, msgAndArgs...) }
+	return ErrorAssertionFunc(
+		func(t testing.TB, err error) { assert.Nil(t, err, msgAndArgs...) },
+	)
 }
 
 func ErrorEqual(want error, msgAndArgs ...interface{}) ErrorAssertion {
-	return func(t testing.TB, out error) {
-		assert.Equal(t, want, out, msgAndArgs...)
-	}
+	return ErrorAssertionFunc(
+		func(t testing.TB, out error) { assert.Equal(t, want, out, msgAndArgs...) },
+	)
 }
 
 func ErrorCause(want error, msgAndArgs ...interface{}) ErrorAssertion {
-	return func(t testing.TB, out error) {
-		assert.Equal(t, want, errors.Cause(out), msgAndArgs...)
-	}
+	return ErrorAssertionFunc(
+		func(t testing.TB, out error) {
+			assert.Equal(t, want, errors.Cause(out), msgAndArgs...)
+		},
+	)
 }

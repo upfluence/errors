@@ -1,6 +1,10 @@
 package secondary
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/upfluence/errors/tags"
+)
 
 type withSecondary struct {
 	cause  error
@@ -22,11 +26,7 @@ func (ws *withSecondary) Unwrap() error { return ws.cause }
 func (ws *withSecondary) Cause() error  { return ws.cause }
 
 func (ws *withSecondary) Tags() map[string]interface{} {
-	if t, ok := ws.second.(interface{ Tags() map[string]interface{} }); ok {
-		return t.Tags()
-	}
-
-	return nil
+	return tags.GetTags(ws.second)
 }
 
 func (ws *withSecondary) Errors() []error {
