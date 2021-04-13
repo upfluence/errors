@@ -10,7 +10,11 @@ import (
 )
 
 var defaultOptions = Options{
-	SentryOptions: sentry.ClientOptions{Dsn: os.Getenv("SENTRY_DSN")},
+	Tags: make(map[string]string),
+	SentryOptions: sentry.ClientOptions{
+		Dsn:         os.Getenv("SENTRY_DSN"),
+		Environment: os.Getenv("ENV"),
+	},
 	TagWhitelist: toStringMap(
 		[]string{reporter.RemoteIP, reporter.RemotePort, reporter.DomainKey},
 	),
@@ -47,6 +51,8 @@ func toStringMap(vs []string) map[string]struct{} {
 }
 
 type Options struct {
+	Tags map[string]string
+
 	SentryOptions sentry.ClientOptions
 	Timeout       time.Duration
 
@@ -55,7 +61,21 @@ type Options struct {
 }
 
 func (o Options) client() (*sentry.Client, error) {
+	if len(o.Tags) > 0 {
+		o.SentryOptions.Integrations = func(is []sentry.Integration) []sentry.Integration {
+			return append(is, &tagIntegration{tags: o.Tags})
+		}
+	}
+
 	return sentry.NewClient(o.SentryOptions)
 }
 
 type Option func(*Options)
+
+func WithTags(tags map[string]string) Option {
+	return func(opts *Options) {
+		for k, v := range tags {
+			opts.Tags[k] = v
+		}
+	}
+}
