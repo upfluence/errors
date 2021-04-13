@@ -41,6 +41,7 @@ func NewReporter(os ...Option) (*Reporter, error) {
 	return &Reporter{
 		cl:           cl,
 		tagWhitelist: opts.TagWhitelist,
+		tagBlacklist: opts.TagBlacklist,
 		timeout:      opts.Timeout,
 	}, nil
 }
