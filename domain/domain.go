@@ -9,7 +9,7 @@ import (
 	"github.com/upfluence/errors/base"
 )
 
-const NoDomain = "unknown"
+const NoDomain = Domain("unknown")
 
 type Domain string
 
