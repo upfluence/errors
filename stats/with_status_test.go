@@ -44,7 +44,10 @@ func TestGetStatus(t *testing.T) {
 func TestGetTags(t *testing.T) {
 	assert.Equal(
 		t,
-		map[string]interface{}{"domain": "github.com/upfluence/errors/stats", "status": "baz"},
+		map[string]interface{}{
+			"domain": "github.com/upfluence/errors/stats_test",
+			"status": "baz",
+		},
 		tags.GetTags(stats.WithStatus(errors.New("bar"), "baz")),
 	)
 }

@@ -1,12 +1,10 @@
 package domain
 
 import (
-	"go/build"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/upfluence/errors/base"
+	"github.com/upfluence/errors/stacktrace"
 )
 
 const NoDomain = Domain("unknown")
@@ -18,15 +16,9 @@ func PackageDomain() Domain {
 }
 
 func PackageDomainAtDepth(depth int) Domain {
-	_, f, _, _ := runtime.Caller(1 + depth)
+	var fn, _, _ = stacktrace.Caller(1 + depth).Location()
 
-	dir := filepath.Dir(f)
-
-	for _, d := range build.Default.SrcDirs() {
-		dir = strings.TrimPrefix(dir, d+"/")
-	}
-
-	return Domain(dir)
+	return Domain(packageName(fn))
 }
 
 func GetDomain(err error) Domain {
@@ -43,4 +35,22 @@ func GetDomain(err error) Domain {
 	}
 
 	return NoDomain
+}
+
+func packageName(name string) string {
+	// A prefix of "type." and "go." is a compiler-generated symbol that doesn't belong to any package.
+	// See variable reservedimports in cmd/compile/internal/gc/subr.go
+	if strings.HasPrefix(name, "go.") || strings.HasPrefix(name, "type.") {
+		return ""
+	}
+
+	pathend := strings.LastIndex(name, "/")
+	if pathend < 0 {
+		pathend = 0
+	}
+
+	if i := strings.Index(name[pathend:], "."); i != -1 {
+		return name[:pathend+i]
+	}
+	return ""
 }

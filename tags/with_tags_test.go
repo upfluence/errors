@@ -25,7 +25,10 @@ func TestGetTags(t *testing.T) {
 
 	assert.Equal(
 		t,
-		map[string]interface{}{"domain": "github.com/upfluence/errors/tags", "foo": 1},
+		map[string]interface{}{
+			"domain": "github.com/upfluence/errors/tags_test",
+			"foo":    1,
+		},
 		tags.GetTags(
 			errors.WithTags(errors.New("foo"), map[string]interface{}{"foo": 1}),
 		),

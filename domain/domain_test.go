@@ -15,13 +15,13 @@ func TestDomain(t *testing.T) {
 
 	assert.Equal(
 		t,
-		domain.Domain("github.com/upfluence/errors/domain"),
+		domain.Domain("github.com/upfluence/errors/domain_test"),
 		domain.GetDomain(err),
 	)
 
 	assert.Equal(
 		t,
-		domain.Domain("github.com/upfluence/errors/domain"),
+		domain.Domain("github.com/upfluence/errors/domain_test"),
 		domain.GetDomain(fmt.Errorf("wrapped: %w", err)),
 	)
 

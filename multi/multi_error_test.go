@@ -25,7 +25,7 @@ func TestTags(t *testing.T) {
 		t,
 		map[string]interface{}{
 			"bar":    2,
-			"domain": "github.com/upfluence/errors/multi",
+			"domain": "github.com/upfluence/errors/multi_test",
 			"foo":    1,
 		},
 		tags.GetTags(err),

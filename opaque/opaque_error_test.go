@@ -16,7 +16,10 @@ func TestOpaque(t *testing.T) {
 	assert.Equal(t, err, errors.Cause(err))
 	assert.Equal(
 		t,
-		map[string]interface{}{"domain": "github.com/upfluence/errors/opaque", "foo": 1},
+		map[string]interface{}{
+			"domain": "github.com/upfluence/errors/opaque_test",
+			"foo":    1,
+		},
 		tags.GetTags(err),
 	)
 	assert.Equal(t, "bar", err.Error())
