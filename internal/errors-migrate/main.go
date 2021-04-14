@@ -1,8 +1,8 @@
 package main
 
 import (
+	"bytes"
 	"flag"
-	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/token"
@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/tools/imports"
 )
 
 func main() {
@@ -71,8 +73,6 @@ func parseFile(fname string, l *log.Logger, dryRun bool) error {
 		return nil
 	}
 
-	ast.SortImports(fset, f)
-
 	l.Println(fname)
 
 	var (
@@ -83,7 +83,7 @@ func parseFile(fname string, l *log.Logger, dryRun bool) error {
 	if dryRun {
 		w = l.Writer()
 	} else {
-		file, err := os.OpenFile(fname, os.O_RDWR, 0)
+		file, err := os.OpenFile(fname, os.O_WRONLY|os.O_TRUNC, 0)
 
 		if err != nil {
 			return err
@@ -93,7 +93,19 @@ func parseFile(fname string, l *log.Logger, dryRun bool) error {
 		c = file
 	}
 
-	if err := format.Node(w, fset, f); err != nil {
+	var buf bytes.Buffer
+
+	if err := format.Node(&buf, fset, f); err != nil {
+		return err
+	}
+
+	res, err := imports.Process(fname, buf.Bytes(), &imports.Options{FormatOnly: true})
+
+	if err != nil {
+		return err
+	}
+
+	if _, err := w.Write(res); err != nil {
 		return err
 	}
 
