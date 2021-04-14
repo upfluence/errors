@@ -15,6 +15,23 @@ func TestErrorFormatting(t *testing.T) {
 	assert.Equal(t, "[foo, bar]", err.Error())
 }
 
+func TestCombining(t *testing.T) {
+	foo := errors.New("foo")
+
+	for _, tt := range []struct {
+		errs []error
+
+		want error
+	}{
+		{errs: []error{nil, nil, errors.Combine(nil, nil)}},
+		{errs: []error{}},
+		{errs: []error{nil, nil, errors.Combine(nil, foo)}, want: foo},
+		{errs: []error{foo}, want: foo},
+	} {
+		assert.Equal(t, tt.want, errors.WrapErrors(tt.errs))
+	}
+}
+
 func TestTags(t *testing.T) {
 	var err = errors.Combine(
 		errors.WithTags(errors.New("foo"), map[string]interface{}{"foo": 1}),

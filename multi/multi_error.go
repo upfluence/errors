@@ -61,14 +61,39 @@ func Wrap(errs []error) error {
 	var merrs []error
 
 	for _, err := range errs {
-		if e, ok := err.(interface{ Errors() []error }); ok {
+		if err == nil {
+			continue
+		}
+
+		if e, ok := err.(MultiError); ok {
 			merrs = append(merrs, e.Errors()...)
 		} else {
 			merrs = append(merrs, err)
 		}
 	}
 
-	return multiError(merrs)
+	switch len(merrs) {
+	case 0:
+		return nil
+	case 1:
+		return merrs[0]
+	default:
+		return multiError(merrs)
+	}
 }
 
 func Combine(errs ...error) error { return Wrap(errs) }
+
+type MultiError interface {
+	Errors() []error
+}
+
+func ExtractErrors(err error) []error {
+	merr, ok := err.(MultiError)
+
+	if !ok {
+		return []error{err}
+	}
+
+	return merr.Errors()
+}
