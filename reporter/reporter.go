@@ -25,6 +25,8 @@ const (
 	ThriftRequestCallerKey  = "thrift.request.caller"
 )
 
+var NopReporter Reporter = nopReporter{}
+
 type ReportOptions struct {
 	Tags map[string]interface{}
 
@@ -36,3 +38,8 @@ type Reporter interface {
 
 	Report(error, ReportOptions)
 }
+
+type nopReporter struct{}
+
+func (nopReporter) Close() error                { return nil }
+func (nopReporter) Report(error, ReportOptions) {}
