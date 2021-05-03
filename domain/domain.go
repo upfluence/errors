@@ -21,8 +21,8 @@ func PackageDomainAtDepth(depth int) Domain {
 
 func GetDomain(err error) Domain {
 	for {
-		if wd, ok := err.(*withDomain); ok {
-			return wd.domain
+		if wd, ok := err.(interface{ Domain() Domain }); ok {
+			return wd.Domain()
 		}
 
 		err = base.UnwrapOnce(err)
