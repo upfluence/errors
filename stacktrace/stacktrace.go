@@ -43,8 +43,11 @@ func GetFrames(err error) []Frame {
 			break
 		}
 
-		if ferr, ok := err.(interface{ Frame() Frame }); ok {
+		switch ferr := err.(type) {
+		case interface{ Frame() Frame }:
 			fs = append(fs, ferr.Frame())
+		case interface{ Frames() []Frame }:
+			fs = append(fs, ferr.Frames()...)
 		}
 
 		err = base.UnwrapOnce(err)

@@ -26,7 +26,7 @@ type defaultStatuser struct{}
 
 func (defaultStatuser) Status(err error) string {
 	switch t := fmt.Sprintf("%T", err); t {
-	case "*errors.errorString", "*errors.fundamental":
+	case "*errors.errorString", "*errors.fundamental", "*opaque.opaqueError":
 		return err.Error()
 	default:
 		return t

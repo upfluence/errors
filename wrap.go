@@ -5,12 +5,15 @@ import (
 
 	"github.com/upfluence/errors/domain"
 	"github.com/upfluence/errors/message"
+	"github.com/upfluence/errors/opaque"
 )
 
 func New(msg string) error {
-	return domain.WithDomain(
-		WithFrame(errors.New(msg), 1),
-		domain.PackageDomainAtDepth(1),
+	return opaque.Opaque(
+		domain.WithDomain(
+			WithFrame(errors.New(msg), 1),
+			domain.PackageDomainAtDepth(1),
+		),
 	)
 }
 

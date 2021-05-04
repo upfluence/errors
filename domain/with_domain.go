@@ -8,9 +8,10 @@ type withDomain struct {
 	domain Domain
 }
 
-func (ws *withDomain) Error() string { return ws.cause.Error() }
-func (ws *withDomain) Unwrap() error { return ws.cause }
-func (ws *withDomain) Cause() error  { return ws.cause }
+func (ws *withDomain) Error() string  { return ws.cause.Error() }
+func (ws *withDomain) Unwrap() error  { return ws.cause }
+func (ws *withDomain) Cause() error   { return ws.cause }
+func (ws *withDomain) Domain() Domain { return ws.domain }
 
 func (ws *withDomain) Tags() map[string]interface{} {
 	return map[string]interface{}{"domain": string(ws.domain)}
