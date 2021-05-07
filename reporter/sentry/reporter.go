@@ -73,7 +73,7 @@ func (r *Reporter) appendTag(k string, v interface{}, evt *sentry.Event) {
 		return
 	}
 
-	evt.Contexts[k] = v
+	evt.Extra[k] = v
 }
 
 func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Event {
