@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"flag"
+	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/token"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"golang.org/x/tools/imports"
@@ -62,11 +64,11 @@ func parseFile(fname string, l *log.Logger, dryRun bool) error {
 	var changed bool
 
 	for _, s := range f.Imports {
-		switch s.Path.Value {
-		case "\"errors\"", "\"github.com/pkg/errors\"":
-			s.Path.Value = "\"github.com/upfluence/errors\""
-			changed = true
-		}
+		changed = changed || rewriteImport(s)
+	}
+
+	for _, d := range f.Decls {
+		changed = changed || cleanErrorFormat(d)
 	}
 
 	if !changed {
@@ -116,4 +118,59 @@ func parseFile(fname string, l *log.Logger, dryRun bool) error {
 	}
 
 	return nil
+}
+
+func rewriteImport(s *ast.ImportSpec) bool {
+	switch s.Path.Value {
+	case "\"errors\"", "\"github.com/pkg/errors\"":
+		s.Path.Value = "\"github.com/upfluence/errors\""
+		return true
+	}
+
+	return false
+}
+
+var prefixErrorValueRegexp = regexp.MustCompile(`(\w+\/)*\w+\: `)
+
+func cleanErrorFormat(d ast.Decl) bool {
+	gd, ok := d.(*ast.GenDecl)
+
+	if !ok || gd.Tok != token.VAR {
+		return false
+	}
+
+	changed := false
+
+	for _, spec := range gd.Specs {
+		vs, ok := spec.(*ast.ValueSpec)
+
+		if !ok || len(vs.Values) != 1 {
+			continue
+		}
+
+		ce, ok := vs.Values[0].(*ast.CallExpr)
+
+		if !ok || len(ce.Args) != 1 {
+			continue
+		}
+
+		bl, oka := ce.Args[0].(*ast.BasicLit)
+		se, oks := ce.Fun.(*ast.SelectorExpr)
+
+		if !oka || !oks || bl.Kind != token.STRING {
+			continue
+		}
+
+		x, ok := se.X.(*ast.Ident)
+
+		if !ok || se.Sel.Name != "New" || x.Name != "errors" {
+			continue
+		}
+
+		bl.Value = prefixErrorValueRegexp.ReplaceAllString(bl.Value, "")
+
+		changed = true
+	}
+
+	return changed
 }
