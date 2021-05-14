@@ -16,7 +16,7 @@ func TestWithTags(t *testing.T) {
 		func(err error) error {
 			return errors.WithTags(err, map[string]interface{}{"foo": 1})
 		},
-		errtest.ErrorWrapperOptions{N: 1},
+		errtest.ErrorWrapperOptions{N: 2},
 	)
 }
 
