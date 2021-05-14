@@ -83,6 +83,10 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 
 	ts := tags.GetTags(err)
 
+	if ts == nil && len(opts.Tags) > 0 {
+		ts = make(map[string]interface{}, len(opts.Tags))
+	}
+
 	for k, v := range opts.Tags {
 		if _, ok := ts[k]; !ok {
 			ts[k] = v
