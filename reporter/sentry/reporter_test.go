@@ -39,6 +39,7 @@ func TestBuildEvent(t *testing.T) {
 				)
 				assert.Equal(t, map[string]interface{}{}, evt.Contexts)
 			},
+			ropts: reporter.ReportOptions{Depth: 1},
 		},
 		{
 			name: "error transaction tag",

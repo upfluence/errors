@@ -104,7 +104,7 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 			Type:       fmt.Sprintf("%T", cause),
 			Value:      cause.Error(),
 			Module:     string(domain.GetDomain(err)),
-			Stacktrace: extractStacktrace(err, opts.Depth+2),
+			Stacktrace: extractStacktrace(err, opts.Depth+1),
 		},
 	}
 
@@ -135,7 +135,7 @@ func extractStacktrace(err error, n int) *sentry.Stacktrace {
 		)
 	}
 
-	appendFrame(stacktrace.Caller(n + 1))
+	appendFrame(stacktrace.Caller(n + 2))
 
 	for _, f := range stacktrace.GetFrames(err) {
 		appendFrame(f)
