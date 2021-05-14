@@ -7,30 +7,33 @@ import (
 	"github.com/upfluence/errors/base"
 )
 
-type Frame struct {
-	frames [3]uintptr
-}
+type Frame uintptr
 
 func Caller(depth int) Frame {
-	var s Frame
+	var callers [1]uintptr
+	runtime.Callers(2+depth, callers[:])
 
-	runtime.Callers(depth+1, s.frames[:])
+	return Frame(callers[0])
+}
 
-	return s
+func Stacktrace(depth, count int) []Frame {
+	var (
+		callers = make([]uintptr, count)
+		n       = runtime.Callers(2+depth, callers)
+	)
+
+	fs := make([]Frame, n)
+
+	for i := 0; i < n; i++ {
+		fs[i] = Frame(callers[i])
+	}
+
+	return fs
+
 }
 
 func (f Frame) Location() (string, string, int) {
-	frames := runtime.CallersFrames(f.frames[:])
-
-	if _, ok := frames.Next(); !ok {
-		return "", "", 0
-	}
-
-	fr, ok := frames.Next()
-
-	if !ok {
-		return "", "", 0
-	}
+	fr, _ := runtime.CallersFrames([]uintptr{uintptr(f)}).Next()
 
 	return fr.Function, fr.File, fr.Line
 }
