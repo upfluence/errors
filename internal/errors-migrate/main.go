@@ -101,7 +101,11 @@ func parseFile(fname string, l *log.Logger, dryRun bool) error {
 		return err
 	}
 
-	res, err := imports.Process(fname, buf.Bytes(), &imports.Options{FormatOnly: true})
+	res, err := imports.Process(
+		fname,
+		buf.Bytes(),
+		&imports.Options{Comments: true, FormatOnly: true},
+	)
 
 	if err != nil {
 		return err
