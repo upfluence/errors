@@ -28,7 +28,7 @@ func TestCombining(t *testing.T) {
 		{errs: []error{nil, nil, errors.Combine(nil, foo)}, want: foo},
 		{errs: []error{foo}, want: foo},
 	} {
-		assert.Equal(t, tt.want, errors.WrapErrors(tt.errs))
+		assert.Equal(t, tt.want, errors.Cause(errors.WrapErrors(tt.errs)))
 	}
 }
 

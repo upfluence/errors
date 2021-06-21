@@ -3,6 +3,7 @@ package multi
 import (
 	"strings"
 
+	"github.com/upfluence/errors/base"
 	"github.com/upfluence/errors/tags"
 )
 
@@ -91,9 +92,15 @@ type MultiError interface {
 func ExtractErrors(err error) []error {
 	merr, ok := err.(MultiError)
 
-	if !ok {
+	if ok {
+		return merr.Errors()
+	}
+
+	nerr := base.UnwrapOnce(err)
+
+	if nerr == nil {
 		return []error{err}
 	}
 
-	return merr.Errors()
+	return ExtractErrors(err)
 }
