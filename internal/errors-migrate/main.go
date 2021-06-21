@@ -64,11 +64,19 @@ func parseFile(fname string, l *log.Logger, dryRun bool) error {
 	var changed bool
 
 	for _, s := range f.Imports {
-		changed = changed || rewriteImport(s)
+		if rewriteImport(s) {
+			changed = true
+		}
 	}
 
 	for _, d := range f.Decls {
-		changed = changed || cleanErrorFormat(d)
+		if rewriteMultiError(d) {
+			changed = true
+		}
+
+		if cleanErrorFormat(d) {
+			changed = true
+		}
 	}
 
 	if !changed {
@@ -104,7 +112,7 @@ func parseFile(fname string, l *log.Logger, dryRun bool) error {
 	res, err := imports.Process(
 		fname,
 		buf.Bytes(),
-		&imports.Options{Comments: true, FormatOnly: true},
+		&imports.Options{Comments: true},
 	)
 
 	if err != nil {
@@ -177,4 +185,70 @@ func cleanErrorFormat(d ast.Decl) bool {
 	}
 
 	return changed
+}
+
+func rewriteMultiError(d ast.Decl) bool {
+	fd, ok := d.(*ast.FuncDecl)
+
+	if !ok {
+		return false
+	}
+
+	var changed bool
+
+	for _, stmt := range fd.Body.List {
+		if rewriteStmtMultiError(stmt) {
+			changed = true
+		}
+	}
+
+	return changed
+}
+
+func rewriteStmtMultiError(stmt ast.Stmt) bool {
+	var changed bool
+
+	switch sstmt := stmt.(type) {
+	case *ast.DeclStmt:
+		return rewriteMultiError(sstmt.Decl)
+	case *ast.AssignStmt:
+		for _, r := range sstmt.Rhs {
+			if rewriteExprMultiError(r) {
+				changed = true
+			}
+		}
+	case *ast.IfStmt:
+		return rewriteStmtMultiError(sstmt.Init)
+	case *ast.ReturnStmt:
+		for _, r := range sstmt.Results {
+			if rewriteExprMultiError(r) {
+				changed = true
+			}
+		}
+	}
+
+	return changed
+}
+
+func rewriteExprMultiError(expr ast.Expr) bool {
+	switch texpr := expr.(type) {
+	case *ast.SelectorExpr:
+		pkg, ok := texpr.X.(*ast.Ident)
+
+		if !ok || pkg.Name != "multierror" {
+			return false
+		}
+
+		pkg.Name = "errors"
+
+		if texpr.Sel.Name == "Wrap" {
+			texpr.Sel.Name = "WrapErrors"
+		}
+
+		return true
+	case *ast.CallExpr:
+		return rewriteExprMultiError(texpr.Fun)
+	}
+
+	return false
 }
