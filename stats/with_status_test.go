@@ -17,7 +17,7 @@ func TestWithStauts(t *testing.T) {
 		func(err error) error {
 			return errors.WithStatus(err, "foo")
 		},
-		errtest.ErrorWrapperOptions{N: 1},
+		errtest.ErrorWrapperOptions{N: 2},
 	)
 }
 
