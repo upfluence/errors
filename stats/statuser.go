@@ -34,6 +34,10 @@ func (defaultStatuser) Status(err error) string {
 }
 
 func GetStatus(err error, opts ...ExtractStatusOption) string {
+	type statuser interface {
+		Status() string
+	}
+
 	var o = defaultStatusOptions
 
 	for _, opt := range opts {
@@ -45,10 +49,8 @@ func GetStatus(err error, opts ...ExtractStatusOption) string {
 	}
 
 	for {
-		ws, ok := err.(*withStatus)
-
-		if ok {
-			return ws.status
+		if st, ok := err.(statuser); ok {
+			return st.Status()
 		}
 
 		cause := base.UnwrapOnce(err)
