@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -30,7 +31,15 @@ func main() {
 
 	flag.Parse()
 
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+	pkg, err := exec.Command("go", "list", "-m").Output()
+
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+	imports.LocalPrefix = string(pkg)
+
+	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -48,7 +57,7 @@ func main() {
 	})
 
 	if err != nil {
-		l.Println(err.Error())
+		l.Fatal(err.Error())
 	}
 }
 
