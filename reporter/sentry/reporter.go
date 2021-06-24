@@ -168,7 +168,7 @@ func stringifyTag(v interface{}) string {
 		return ""
 	}
 
-	return fmt.Sprintf("%s", v)
+	return fmt.Sprintf("%v", v)
 }
 
 func transactionName(tags map[string]interface{}) string {
