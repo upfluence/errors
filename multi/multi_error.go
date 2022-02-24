@@ -90,6 +90,10 @@ type MultiError interface {
 }
 
 func ExtractErrors(err error) []error {
+	if err == nil {
+		return nil
+	}
+
 	merr, ok := err.(MultiError)
 
 	if ok {
@@ -102,5 +106,5 @@ func ExtractErrors(err error) []error {
 		return []error{err}
 	}
 
-	return ExtractErrors(err)
+	return ExtractErrors(nerr)
 }
