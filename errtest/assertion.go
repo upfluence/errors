@@ -1,6 +1,7 @@
 package errtest
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,7 +41,13 @@ func (fn ErrorAssertionFunc) Assert(t testing.TB, err error) { fn(t, err) }
 
 func NoError(msgAndArgs ...interface{}) ErrorAssertion {
 	return ErrorAssertionFunc(
-		func(t testing.TB, err error) { assert.Nil(t, err, msgAndArgs...) },
+		func(t testing.TB, err error) {
+			assert.Nil(
+				t,
+				err,
+				append([]interface{}{fmt.Sprint(err)}, msgAndArgs...),
+			)
+		},
 	)
 }
 
