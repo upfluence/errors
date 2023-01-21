@@ -37,7 +37,7 @@ func TestBuildEvent(t *testing.T) {
 					map[string]string{"domain": "github.com/upfluence/errors/reporter/sentry"},
 					evt.Tags,
 				)
-				assert.Equal(t, map[string]interface{}{}, evt.Contexts)
+				assert.Equal(t, map[string]map[string]interface{}{}, evt.Contexts)
 			},
 			ropts: reporter.ReportOptions{Depth: 1},
 		},
