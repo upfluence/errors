@@ -11,6 +11,7 @@ type Frame uintptr
 
 func Caller(depth int) Frame {
 	var callers [1]uintptr
+
 	runtime.Callers(2+depth, callers[:])
 
 	return Frame(callers[0])
@@ -29,7 +30,6 @@ func Stacktrace(depth, count int) []Frame {
 	}
 
 	return fs
-
 }
 
 func (f Frame) Location() (string, string, int) {
@@ -74,5 +74,6 @@ func PackageName(name string) string {
 	if i := strings.Index(name[pathend:], "."); i != -1 {
 		return name[:pathend+i]
 	}
+
 	return ""
 }

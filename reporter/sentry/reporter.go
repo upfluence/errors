@@ -1,9 +1,11 @@
 package sentry
 
 import (
+	"errors"
 	"fmt"
 	"go/build"
 	"net/url"
+	"runtime"
 	"strings"
 	"time"
 
@@ -139,10 +141,18 @@ func extractStacktrace(err error, n int) *sentry.Stacktrace {
 		)
 	}
 
-	appendFrame(stacktrace.Caller(n + 2))
+	var rerr runtime.Error
 
-	for _, f := range stacktrace.GetFrames(err) {
-		appendFrame(f)
+	if errors.As(err, &rerr) {
+		for _, f := range stacktrace.Stacktrace(n+1, 10) {
+			appendFrame(f)
+		}
+	} else {
+		appendFrame(stacktrace.Caller(n + 2))
+
+		for _, f := range stacktrace.GetFrames(err) {
+			appendFrame(f)
+		}
 	}
 
 	return &s

@@ -1,12 +1,14 @@
 package sentry
 
 import (
+	"io"
 	"testing"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/upfluence/errors"
+	"github.com/upfluence/errors/recovery"
 	"github.com/upfluence/errors/reporter"
 )
 
@@ -86,6 +88,18 @@ func TestBuildEvent(t *testing.T) {
 				)
 			},
 		},
+		{
+
+			name: "simple error with http opts",
+			err:  recovery.WrapRecoverResult(1),
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assertFuncNames(
+					t,
+					evt,
+					[]string{"TestBuildEvent.func7", "tRunner", "goexit"},
+				)
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			r, err := NewReporter(tt.opts...)
@@ -96,4 +110,45 @@ func TestBuildEvent(t *testing.T) {
 			tt.evtfn(t, evt)
 		})
 	}
+}
+
+func TestSegfault(t *testing.T) {
+	r, err := NewReporter()
+
+	assert.NoError(t, err)
+
+	defer func() {
+		if err := recover(); err != nil {
+			evt := r.buildEvent(
+				recovery.WrapRecoverResult(err),
+				reporter.ReportOptions{},
+			)
+
+			assertFuncNames(
+				t,
+				evt,
+				[]string{"TestSegfault.func1", "gopanic", "panicmem", "sigpanic", "TestSegfault", "tRunner", "goexit"},
+			)
+		} else {
+			t.Error("no error recovered")
+		}
+	}()
+
+	var f io.Reader
+
+	f.Read(nil)
+}
+
+func assertFuncNames(t testing.TB, evt *sentry.Event, want []string) {
+	exc := evt.Exception
+	assert.Len(t, exc, 1)
+
+	frames := exc[0].Stacktrace.Frames
+	fns := make([]string, len(frames))
+
+	for i, f := range frames {
+		fns[i] = f.Function
+	}
+
+	assert.Equal(t, want, fns)
 }
