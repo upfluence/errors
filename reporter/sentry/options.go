@@ -12,8 +12,9 @@ import (
 var defaultOptions = Options{
 	Tags: make(map[string]string),
 	SentryOptions: sentry.ClientOptions{
-		Dsn:         os.Getenv("SENTRY_DSN"),
-		Environment: os.Getenv("ENV"),
+		Dsn:            os.Getenv("SENTRY_DSN"),
+		Environment:    os.Getenv("ENV"),
+		SendDefaultPII: true,
 	},
 	TagWhitelist: toStringMap(
 		[]string{reporter.RemoteIP, reporter.RemotePort, reporter.DomainKey},
@@ -27,6 +28,7 @@ var defaultOptions = Options{
 		stringEqual(reporter.HTTPRequestPathKey),
 		stringEqual(reporter.HTTPRequestHostKey),
 		stringEqual(reporter.HTTPRequestMethodKey),
+		stringEqual(reporter.HTTPRequestBodyKey),
 		stringPrefix(reporter.HTTPRequestHeaderKeyPrefix),
 		stringPrefix(reporter.HTTPRequestQueryValuesKeyPrefix),
 	},

@@ -231,6 +231,8 @@ func buildRequest(tags map[string]interface{}) *sentry.Request {
 			u.Host = stringifyTag(v)
 		case k == reporter.HTTPRequestMethodKey:
 			req.Method = stringifyTag(v)
+		case k == reporter.HTTPRequestBodyKey:
+			req.Data = stringifyTag(v)
 		case strings.HasPrefix(k, reporter.HTTPRequestHeaderKeyPrefix):
 			if req.Headers == nil {
 				req.Headers = make(map[string]string)

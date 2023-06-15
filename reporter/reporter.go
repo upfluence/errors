@@ -15,7 +15,9 @@ const (
 	HTTPRequestPathKey   = "http.request.path"
 	HTTPRequestHostKey   = "http.request.host"
 	HTTPRequestProtoKey  = "http.request.proto"
+	HTTPRequestPortKey   = "http.request.port"
 	HTTPRequestMethodKey = "http.request.method"
+	HTTPRequestBodyKey   = "http.request.body"
 
 	HTTPRequestHeaderKeyPrefix      = "http.request.headers."
 	HTTPRequestQueryValuesKeyPrefix = "http.request.query_values."
@@ -23,6 +25,7 @@ const (
 	ThriftRequestMethodKey  = "thrift.request.method"
 	ThriftRequestServiceKey = "thrift.request.service"
 	ThriftRequestCallerKey  = "thrift.request.caller"
+	ThriftRequestBodyKey    = "thrift.request.body"
 )
 
 var NopReporter Reporter = nopReporter{}
