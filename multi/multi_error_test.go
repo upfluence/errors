@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/upfluence/errors"
+	"github.com/upfluence/errors/multi"
 	"github.com/upfluence/errors/tags"
 )
 
@@ -27,6 +28,12 @@ func TestCombining(t *testing.T) {
 		{errs: []error{}},
 		{errs: []error{nil, nil, errors.Combine(nil, foo)}, want: foo},
 		{errs: []error{foo}, want: foo},
+		{
+			errs: []error{
+				foo, errors.Combine(foo, foo),
+			},
+			want: multi.Combine(foo, foo, foo),
+		},
 	} {
 		assert.Equal(t, tt.want, errors.Cause(errors.WrapErrors(tt.errs)))
 	}

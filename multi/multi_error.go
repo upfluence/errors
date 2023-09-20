@@ -9,9 +9,8 @@ import (
 
 type multiError []error
 
-func (errs multiError) Errors() []error {
-	return errs
-}
+func (errs multiError) Unwrap() []error { return errs }
+func (errs multiError) Errors() []error { return errs }
 
 func (errs multiError) Error() string {
 	var b strings.Builder
@@ -66,11 +65,7 @@ func Wrap(errs []error) error {
 			continue
 		}
 
-		if e, ok := err.(MultiError); ok {
-			merrs = append(merrs, e.Errors()...)
-		} else {
-			merrs = append(merrs, err)
-		}
+		merrs = append(merrs, ExtractErrors(err)...)
 	}
 
 	switch len(merrs) {
@@ -106,5 +101,11 @@ func ExtractErrors(err error) []error {
 		return []error{err}
 	}
 
-	return ExtractErrors(nerr)
+	errs := ExtractErrors(nerr)
+
+	if len(errs) == 1 && errs[0] == nerr {
+		return []error{err}
+	}
+
+	return errs
 }
