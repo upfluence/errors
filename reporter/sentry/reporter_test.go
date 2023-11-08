@@ -2,6 +2,7 @@ package sentry
 
 import (
 	"io"
+	"regexp"
 	"testing"
 
 	"github.com/getsentry/sentry-go"
@@ -16,9 +17,10 @@ func TestBuildEvent(t *testing.T) {
 	for _, tt := range []struct {
 		name string
 
-		opts  []Option
-		err   error
-		ropts reporter.ReportOptions
+		opts      []Option
+		modifiers []func(*Reporter)
+		err       error
+		ropts     reporter.ReportOptions
 
 		evtfn func(*testing.T, *sentry.Event)
 	}{
@@ -96,8 +98,46 @@ func TestBuildEvent(t *testing.T) {
 				assertFuncNames(
 					t,
 					evt,
-					[]string{"TestBuildEvent.func7", "tRunner", "goexit"},
+					[]string{`TestBuildEvent.func\d`, "tRunner", "goexit"},
 				)
+			},
+		},
+		{
+			name: "simple error with http opts",
+			err: errors.WithTags(
+				errors.New("basic error"),
+				map[string]interface{}{"foo": "bar", "biz": "buz"},
+			),
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(t, evt.Extra, map[string]interface{}{"foo": "bar", "biz": "buz"})
+				assert.Equal(t, evt.Tags, map[string]string{"domain": "github.com/upfluence/errors/reporter/sentry"})
+			},
+		},
+		{
+			name: "simple error with extra",
+			err: errors.WithTags(
+				errors.New("basic error"),
+				map[string]interface{}{"foo": "bar", "biz": "buz"},
+			),
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(t, evt.Extra, map[string]interface{}{"foo": "bar", "biz": "buz"})
+				assert.Equal(t, evt.Tags, map[string]string{"domain": "github.com/upfluence/errors/reporter/sentry"})
+			},
+		},
+		{
+			name: "simple error with extra & whitelisted tag",
+			err: errors.WithTags(
+				errors.New("basic error"),
+				map[string]interface{}{"foo": "bar", "biz": "buz"},
+			),
+			modifiers: []func(*Reporter){
+				func(r *Reporter) {
+					r.WhitelistTag(func(s string) bool { return s == "foo" })
+				},
+			},
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(t, evt.Extra, map[string]interface{}{"biz": "buz"})
+				assert.Equal(t, evt.Tags, map[string]string{"foo": "bar", "domain": "github.com/upfluence/errors/reporter/sentry"})
 			},
 		},
 	} {
@@ -105,6 +145,10 @@ func TestBuildEvent(t *testing.T) {
 			r, err := NewReporter(tt.opts...)
 
 			assert.NoError(t, err)
+
+			for _, fn := range tt.modifiers {
+				fn(r)
+			}
 
 			evt := r.buildEvent(tt.err, tt.ropts)
 			tt.evtfn(t, evt)
@@ -127,7 +171,7 @@ func TestSegfault(t *testing.T) {
 			assertFuncNames(
 				t,
 				evt,
-				[]string{"TestSegfault.func1", "gopanic", "panicmem", "sigpanic", "TestSegfault", "tRunner", "goexit"},
+				[]string{`TestSegfault.func\d`, "gopanic", "panicmem", "sigpanic", "TestSegfault", "tRunner", "goexit"},
 			)
 		} else {
 			t.Error("no error recovered")
@@ -144,11 +188,16 @@ func assertFuncNames(t testing.TB, evt *sentry.Event, want []string) {
 	assert.Len(t, exc, 1)
 
 	frames := exc[0].Stacktrace.Frames
-	fns := make([]string, len(frames))
+
+	assert.Len(t, frames, len(want))
 
 	for i, f := range frames {
-		fns[i] = f.Function
+		assert.True(
+			t,
+			regexp.MustCompile(want[i]).MatchString(f.Function),
+			"want regexp = %s, function = %s",
+			want[i],
+			f.Function,
+		)
 	}
-
-	assert.Equal(t, want, fns)
 }

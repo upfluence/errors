@@ -21,7 +21,7 @@ import (
 type Reporter struct {
 	cl *sentry.Client
 
-	tagWhitelist map[string]struct{}
+	tagWhitelist []func(string) bool
 	tagBlacklist []func(string) bool
 
 	timeout time.Duration
@@ -41,11 +41,19 @@ func NewReporter(os ...Option) (*Reporter, error) {
 	}
 
 	return &Reporter{
-		cl:           cl,
-		tagWhitelist: opts.TagWhitelist,
+		cl: cl,
+		tagWhitelist: []func(string) bool{
+			func(k string) bool {
+				_, ok := opts.TagWhitelist[k]
+				return ok
+			},
+		},
 		tagBlacklist: opts.TagBlacklist,
 		timeout:      opts.Timeout,
 	}, nil
+}
+func (r *Reporter) WhitelistTag(fns ...func(string) bool) {
+	r.tagWhitelist = append(r.tagWhitelist, fns...)
 }
 
 func (r *Reporter) Report(err error, opts reporter.ReportOptions) {
@@ -70,9 +78,11 @@ func (r *Reporter) appendTag(k string, v interface{}, evt *sentry.Event) {
 		}
 	}
 
-	if _, ok := r.tagWhitelist[k]; ok {
-		evt.Tags[k] = stringifyTag(v)
-		return
+	for _, fn := range r.tagWhitelist {
+		if fn(k) {
+			evt.Tags[k] = stringifyTag(v)
+			return
+		}
 	}
 
 	evt.Extra[k] = v
