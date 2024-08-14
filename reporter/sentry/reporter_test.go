@@ -109,7 +109,15 @@ func TestBuildEvent(t *testing.T) {
 				map[string]interface{}{"foo": "bar", "biz": "buz"},
 			),
 			evtfn: func(t *testing.T, evt *sentry.Event) {
-				assert.Equal(t, evt.Extra, map[string]interface{}{"foo": "bar", "biz": "buz"})
+				assert.Equal(
+					t,
+					evt.Extra,
+					map[string]interface{}{
+						"foo":         "bar",
+						"biz":         "buz",
+						"error_types": []string{"*stacktrace.withFrame", "*tags.withTags", "*opaque.opaqueError"},
+					},
+				)
 				assert.Equal(t, evt.Tags, map[string]string{"domain": "github.com/upfluence/errors/reporter/sentry"})
 			},
 		},
@@ -120,7 +128,15 @@ func TestBuildEvent(t *testing.T) {
 				map[string]interface{}{"foo": "bar", "biz": "buz"},
 			),
 			evtfn: func(t *testing.T, evt *sentry.Event) {
-				assert.Equal(t, evt.Extra, map[string]interface{}{"foo": "bar", "biz": "buz"})
+				assert.Equal(
+					t,
+					evt.Extra,
+					map[string]interface{}{
+						"foo":         "bar",
+						"biz":         "buz",
+						"error_types": []string{"*stacktrace.withFrame", "*tags.withTags", "*opaque.opaqueError"},
+					},
+				)
 				assert.Equal(t, evt.Tags, map[string]string{"domain": "github.com/upfluence/errors/reporter/sentry"})
 			},
 		},
@@ -136,7 +152,14 @@ func TestBuildEvent(t *testing.T) {
 				},
 			},
 			evtfn: func(t *testing.T, evt *sentry.Event) {
-				assert.Equal(t, evt.Extra, map[string]interface{}{"biz": "buz"})
+				assert.Equal(
+					t,
+					evt.Extra,
+					map[string]interface{}{
+						"biz":         "buz",
+						"error_types": []string{"*stacktrace.withFrame", "*tags.withTags", "*opaque.opaqueError"},
+					},
+				)
 				assert.Equal(t, evt.Tags, map[string]string{"foo": "bar", "domain": "github.com/upfluence/errors/reporter/sentry"})
 			},
 		},

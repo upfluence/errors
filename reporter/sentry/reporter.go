@@ -88,6 +88,21 @@ func (r *Reporter) appendTag(k string, v interface{}, evt *sentry.Event) {
 	evt.Extra[k] = v
 }
 
+func buildErrorTypeChain(err error) []string {
+	var res []string
+
+	for err != nil {
+		res = append(res, fmt.Sprintf("%T", err))
+		err = base.UnwrapOnce(err)
+	}
+
+	if len(res) < 2 {
+		return nil
+	}
+
+	return res
+}
+
 func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Event {
 	if err == nil {
 		return nil
@@ -107,6 +122,7 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 
 	evt := sentry.NewEvent()
 
+	evt.Level = sentry.LevelError
 	evt.Timestamp = time.Now()
 	evt.Message = err.Error()
 	evt.Transaction = transactionName(ts)
@@ -126,6 +142,10 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 
 	for k, v := range ts {
 		r.appendTag(k, v, evt)
+	}
+
+	if ts := buildErrorTypeChain(err); len(ts) > 0 {
+		r.appendTag("error_types", ts, evt)
 	}
 
 	return evt
