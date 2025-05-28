@@ -2,6 +2,7 @@ package errors
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/upfluence/errors/domain"
 	"github.com/upfluence/errors/message"
@@ -12,6 +13,15 @@ func New(msg string) error {
 	return opaque.Opaque(
 		domain.WithDomain(
 			WithFrame(errors.New(msg), 1),
+			domain.PackageDomainAtDepth(1),
+		),
+	)
+}
+
+func Newf(msg string, args ...interface{}) error {
+	return opaque.Opaque(
+		domain.WithDomain(
+			WithFrame(fmt.Errorf(msg, args...), 1),
 			domain.PackageDomainAtDepth(1),
 		),
 	)
