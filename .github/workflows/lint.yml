@@ -10,7 +10,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.19.x
+          go-version: 1.21.x
       - name: Check out code
         uses: actions/checkout@v4
       - name: golanci-lint
