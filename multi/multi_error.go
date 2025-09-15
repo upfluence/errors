@@ -1,6 +1,7 @@
 package multi
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/upfluence/errors/base"
@@ -103,7 +104,7 @@ func ExtractErrors(err error) []error {
 
 	errs := ExtractErrors(nerr)
 
-	if len(errs) == 1 && errs[0] == nerr {
+	if len(errs) == 1 && errors.Is(errs[0], nerr) {
 		return []error{err}
 	}
 

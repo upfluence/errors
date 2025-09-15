@@ -34,6 +34,20 @@ func TestCombining(t *testing.T) {
 			},
 			want: multi.Combine(foo, foo, foo),
 		},
+		{
+			errs: []error{
+				errors.WithStack(notComparableError{s: []string{"foo"}}),
+				errors.Combine(
+					notComparableError{s: []string{"bar"}},
+					notComparableError{s: []string{"buz"}},
+				),
+			},
+			want: multi.Combine(
+				notComparableError{s: []string{"foo"}},
+				notComparableError{s: []string{"bar"}},
+				notComparableError{s: []string{"buz"}},
+			),
+		},
 	} {
 		assert.Equal(t, tt.want, errors.Cause(errors.WrapErrors(tt.errs)))
 	}
@@ -55,3 +69,9 @@ func TestTags(t *testing.T) {
 		tags.GetTags(err),
 	)
 }
+
+type notComparableError struct {
+	s []string
+}
+
+func (notComparableError) Error() string { return "not comparable" }
