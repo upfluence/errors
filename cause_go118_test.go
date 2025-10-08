@@ -39,3 +39,35 @@ func TestIsOfType(t *testing.T) {
 		assert.Equal(t, tt.isMockError, IsOfType[mockError](tt.input))
 	}
 }
+
+func TestAsType(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		input    error
+		expected error
+	}{
+		{
+			name: "nil error",
+		},
+		{
+			name:     "mockError",
+			input:    mockError{},
+			expected: mockError{},
+		},
+		{
+			name:     "wrapped mockError",
+			input:    Wrap(mockError{}, "wrapping"),
+			expected: mockError{},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			m, ok := AsType[mockError](tt.input)
+
+			assert.Equal(t, tt.expected != nil, ok)
+
+			if ok {
+				assert.Equal(t, tt.expected, m)
+			}
+		})
+	}
+}
