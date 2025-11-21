@@ -1,7 +1,13 @@
+// Package reporter provides an interface for error reporting to external services.
+//
+// This package defines the Reporter interface and common tag keys for structured
+// error reporting. Reporters can send errors to services like Sentry with rich
+// contextual information including request details, user information, and custom tags.
 package reporter
 
 import "io"
 
+// Common tag keys for error reporting metadata.
 const (
 	TransactionKey = "transaction"
 	DomainKey      = "domain"
@@ -28,14 +34,17 @@ const (
 	ThriftRequestBodyKey    = "thrift.request.body"
 )
 
+// NopReporter is a Reporter implementation that does nothing.
 var NopReporter Reporter = nopReporter{}
 
+// ReportOptions contains options for reporting an error.
 type ReportOptions struct {
 	Tags map[string]interface{}
 
 	Depth int
 }
 
+// Reporter is the interface for error reporting implementations.
 type Reporter interface {
 	io.Closer
 

@@ -1,3 +1,9 @@
+// Package sentry provides a Sentry implementation of the reporter.Reporter interface.
+//
+// This package integrates with Sentry for error tracking and monitoring.
+// It automatically extracts error metadata including stacktraces, tags, domains,
+// and request information, formatting them for Sentry ingestion. The reporter
+// supports tag whitelisting/blacklisting for controlling which metadata is sent.
 package sentry
 
 import (
@@ -18,6 +24,7 @@ import (
 	"github.com/upfluence/errors/tags"
 )
 
+// Reporter is a Sentry error reporter implementation.
 type Reporter struct {
 	cl *sentry.Client
 
@@ -27,6 +34,7 @@ type Reporter struct {
 	timeout time.Duration
 }
 
+// NewReporter creates a new Sentry reporter with the given options.
 func NewReporter(os ...Option) (*Reporter, error) {
 	var opts = defaultOptions
 
@@ -52,10 +60,14 @@ func NewReporter(os ...Option) (*Reporter, error) {
 		timeout:      opts.Timeout,
 	}, nil
 }
+
+// WhitelistTag adds tag whitelist functions that determine which tags
+// should be included as Sentry tags (vs extra data).
 func (r *Reporter) WhitelistTag(fns ...func(string) bool) {
 	r.tagWhitelist = append(r.tagWhitelist, fns...)
 }
 
+// Report sends an error to Sentry with the given options.
 func (r *Reporter) Report(err error, opts reporter.ReportOptions) {
 	evt := r.buildEvent(err, opts)
 
@@ -66,6 +78,7 @@ func (r *Reporter) Report(err error, opts reporter.ReportOptions) {
 	r.cl.CaptureEvent(evt, nil, nil)
 }
 
+// Close flushes pending events to Sentry and releases resources.
 func (r *Reporter) Close() error {
 	r.cl.Flush(r.timeout)
 	return nil
