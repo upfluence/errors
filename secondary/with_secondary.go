@@ -1,3 +1,8 @@
+// Package secondary provides support for attaching secondary errors to a primary error.
+//
+// This package is useful when an operation fails and a cleanup or recovery operation
+// also fails. The secondary error's tags are included in the combined error, allowing
+// additional context to be preserved without losing the primary error information.
 package secondary
 
 import (
@@ -33,6 +38,9 @@ func (ws *withSecondary) Errors() []error {
 	return []error{ws.cause, ws.second}
 }
 
+// WithSecondaryError combines a primary error with a secondary error.
+// Returns additionalErr if err is nil, returns err if additionalErr is nil,
+// or returns a combined error containing both.
 func WithSecondaryError(err error, additionalErr error) error {
 	if err == nil {
 		return additionalErr

@@ -1,3 +1,9 @@
+// Package stacktrace provides utilities for capturing and managing stack traces.
+//
+// This package allows capturing stack frame information at error creation time,
+// which can be attached to errors and later extracted for debugging or reporting.
+// It supports both single frame and full stacktrace capture, and provides utilities
+// for extracting package names from function names.
 package stacktrace
 
 import (
@@ -7,8 +13,11 @@ import (
 	"github.com/upfluence/errors/base"
 )
 
+// Frame represents a single program counter location in a stack trace.
 type Frame uintptr
 
+// Caller captures a single stack frame at the specified depth.
+// depth=0 returns the caller's frame, depth=1 returns the caller's caller's frame, etc.
 func Caller(depth int) Frame {
 	var callers [1]uintptr
 
@@ -17,6 +26,8 @@ func Caller(depth int) Frame {
 	return Frame(callers[0])
 }
 
+// Stacktrace captures multiple stack frames starting at the specified depth.
+// Returns up to count frames from the call stack.
 func Stacktrace(depth, count int) []Frame {
 	var (
 		callers = make([]uintptr, count)
@@ -32,12 +43,14 @@ func Stacktrace(depth, count int) []Frame {
 	return fs
 }
 
+// Location returns the function name, file path, and line number for this frame.
 func (f Frame) Location() (string, string, int) {
 	fr, _ := runtime.CallersFrames([]uintptr{uintptr(f)}).Next()
 
 	return fr.Function, fr.File, fr.Line
 }
 
+// GetFrames extracts all stack frames from an error by traversing the error chain.
 func GetFrames(err error) []Frame {
 	var fs []Frame
 
@@ -59,6 +72,8 @@ func GetFrames(err error) []Frame {
 	return fs
 }
 
+// PackageName extracts the package path from a fully qualified function name.
+// Returns an empty string for compiler-generated symbols.
 func PackageName(name string) string {
 	// A prefix of "type." and "go." is a compiler-generated symbol that doesn't belong to any package.
 	// See variable reservedimports in cmd/compile/internal/gc/subr.go

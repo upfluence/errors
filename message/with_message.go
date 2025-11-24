@@ -1,3 +1,8 @@
+// Package message provides error wrapping with additional context messages.
+//
+// This package allows you to wrap errors with descriptive messages while
+// preserving the original error. The messages are formatted and prepended
+// to the original error message, creating a clear error chain.
 package message
 
 import "fmt"
@@ -23,6 +28,8 @@ func (wm *withMessage) Unwrap() error       { return wm.cause }
 func (wm *withMessage) Cause() error        { return wm.cause }
 func (wm *withMessage) Args() []interface{} { return wm.args }
 
+// WithMessage wraps an error with an additional context message.
+// Returns nil if err is nil.
 func WithMessage(err error, msg string) error {
 	if err == nil {
 		return nil
@@ -31,6 +38,8 @@ func WithMessage(err error, msg string) error {
 	return &withMessage{cause: err, fmt: msg}
 }
 
+// WithMessagef wraps an error with a formatted context message.
+// Returns nil if err is nil.
 func WithMessagef(err error, msg string, args ...interface{}) error {
 	if err == nil {
 		return nil
