@@ -200,6 +200,24 @@ if err != nil {
 }
 ```
 
+**`WithStack2[T any](v T, err error) (T, error)`** (Go 1.18+)
+
+Adds a stack frame at the current location, while passing through a return value. This is useful for adding stack traces to errors from functions that return multiple values (value, error) in a single line.
+
+If err is nil, returns (v, nil) unchanged. If err is not nil, returns (v, err_with_stack).
+
+```go
+// Instead of this:
+result, err := externalLib.DoSomething()
+if err != nil {
+    return result, errors.WithStack(err)
+}
+return result, nil
+
+// You can write this:
+return errors.WithStack2(externalLib.DoSomething())
+```
+
 **`WithFrame(err error, depth int) error`**
 
 Adds a stack frame at a specific depth in the call stack.
