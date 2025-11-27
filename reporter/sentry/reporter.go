@@ -28,8 +28,9 @@ import (
 type Reporter struct {
 	cl *sentry.Client
 
-	tagWhitelist []func(string) bool
-	tagBlacklist []func(string) bool
+	tagWhitelist    []func(string) bool
+	tagBlacklist    []func(string) bool
+	errorLevelFuncs []ErrorLevelFunc
 
 	timeout time.Duration
 }
@@ -56,8 +57,9 @@ func NewReporter(os ...Option) (*Reporter, error) {
 				return ok
 			},
 		},
-		tagBlacklist: opts.TagBlacklist,
-		timeout:      opts.Timeout,
+		tagBlacklist:    opts.TagBlacklist,
+		timeout:         opts.Timeout,
+		errorLevelFuncs: opts.ErrorLevelFuncs,
 	}, nil
 }
 
@@ -71,11 +73,13 @@ func (r *Reporter) WhitelistTag(fns ...func(string) bool) {
 func (r *Reporter) Report(err error, opts reporter.ReportOptions) {
 	evt := r.buildEvent(err, opts)
 
+	fmt.Println(evt)
+
 	if evt == nil {
 		return
 	}
 
-	r.cl.CaptureEvent(evt, nil, nil)
+	fmt.Println(*r.cl.CaptureEvent(evt, nil, nil))
 }
 
 // Close flushes pending events to Sentry and releases resources.
@@ -121,26 +125,26 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 		return nil
 	}
 
-	ts := tags.GetTags(err)
+	errorTags := tags.GetTags(err)
 
-	if ts == nil && len(opts.Tags) > 0 {
-		ts = make(map[string]interface{}, len(opts.Tags))
+	if errorTags == nil && len(opts.Tags) > 0 {
+		errorTags = make(map[string]interface{}, len(opts.Tags))
 	}
 
 	for k, v := range opts.Tags {
-		if _, ok := ts[k]; !ok {
-			ts[k] = v
+		if _, ok := errorTags[k]; !ok {
+			errorTags[k] = v
 		}
 	}
 
 	evt := sentry.NewEvent()
 
-	evt.Level = sentry.LevelError
+	evt.Level = r.computeErrorLevel(err)
 	evt.Timestamp = time.Now()
 	evt.Message = err.Error()
-	evt.Transaction = transactionName(ts)
-	evt.User = buildUser(ts)
-	evt.Request = buildRequest(ts)
+	evt.Transaction = transactionName(errorTags)
+	evt.User = buildUser(errorTags)
+	evt.Request = buildRequest(errorTags)
 
 	cause := base.UnwrapAll(err)
 
@@ -153,7 +157,7 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 		},
 	}
 
-	for k, v := range ts {
+	for k, v := range errorTags {
 		r.appendTag(k, v, evt)
 	}
 
@@ -162,6 +166,24 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 	}
 
 	return evt
+}
+
+var validLevels = []sentry.Level{
+	sentry.LevelDebug,
+	sentry.LevelInfo,
+	sentry.LevelWarning,
+	sentry.LevelError,
+	sentry.LevelFatal,
+}
+
+func (r *Reporter) computeErrorLevel(err error) sentry.Level {
+	for _, errFunc := range r.errorLevelFuncs {
+		if level := errFunc(err); level != "" {
+			return level
+		}
+	}
+
+	return sentry.LevelError
 }
 
 func extractStacktrace(err error, n int) *sentry.Stacktrace {
