@@ -73,13 +73,11 @@ func (r *Reporter) WhitelistTag(fns ...func(string) bool) {
 func (r *Reporter) Report(err error, opts reporter.ReportOptions) {
 	evt := r.buildEvent(err, opts)
 
-	fmt.Println(evt)
-
 	if evt == nil {
 		return
 	}
 
-	fmt.Println(*r.cl.CaptureEvent(evt, nil, nil))
+	r.cl.CaptureEvent(evt, nil, nil)
 }
 
 // Close flushes pending events to Sentry and releases resources.
@@ -166,14 +164,6 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 	}
 
 	return evt
-}
-
-var validLevels = []sentry.Level{
-	sentry.LevelDebug,
-	sentry.LevelInfo,
-	sentry.LevelWarning,
-	sentry.LevelError,
-	sentry.LevelFatal,
 }
 
 func (r *Reporter) computeErrorLevel(err error) sentry.Level {
