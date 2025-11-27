@@ -93,7 +93,7 @@ func ErrorIsOfTypeFunc[T error](level sentry.Level) ErrorLevelFunc {
 	}
 }
 
-// ErrorCauseTextContainsFunc  an ErrorLevelFunc of the passed level that checks
+// ErrorCauseTextContainsFunc creates an ErrorLevelFunc of the passed level that checks
 // if reported errors' cause's Error() text contains the passed string
 func ErrorCauseTextContainsFunc(errorText string, level sentry.Level) ErrorLevelFunc {
 	return func(err error) sentry.Level {
@@ -141,7 +141,7 @@ func WithTags(tags map[string]string) Option {
 }
 
 // AppendErrorLevelFuncs adds the passed funcs to the ErrorLevelFuncs of the Reporter
-func AppendErrorLevelFuncs(funcs []ErrorLevelFunc) Option {
+func AppendErrorLevelFuncs(funcs ...ErrorLevelFunc) Option {
 	return func(opts *Options) {
 		opts.ErrorLevelFuncs = append(opts.ErrorLevelFuncs, funcs...)
 	}
