@@ -28,9 +28,9 @@ import (
 type Reporter struct {
 	cl *sentry.Client
 
-	tagWhitelist    []func(string) bool
-	tagBlacklist    []func(string) bool
-	errorLevelFuncs []ErrorLevelFunc
+	tagWhitelist      []func(string) bool
+	tagBlacklist      []func(string) bool
+	errorLevelMappers []ErrorLevelMapper
 
 	timeout time.Duration
 }
@@ -57,9 +57,9 @@ func NewReporter(os ...Option) (*Reporter, error) {
 				return ok
 			},
 		},
-		tagBlacklist:    opts.TagBlacklist,
-		timeout:         opts.Timeout,
-		errorLevelFuncs: opts.ErrorLevelFuncs,
+		tagBlacklist:      opts.TagBlacklist,
+		timeout:           opts.Timeout,
+		errorLevelMappers: opts.ErrorLevelMappers,
 	}, nil
 }
 
@@ -167,7 +167,7 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 }
 
 func (r *Reporter) computeErrorLevel(err error) sentry.Level {
-	for _, errFunc := range r.errorLevelFuncs {
+	for _, errFunc := range r.errorLevelMappers {
 		if level := errFunc(err); level != "" {
 			return level
 		}

@@ -13,16 +13,16 @@ import (
 	"github.com/upfluence/errors/reporter"
 )
 
-type ErrorLevelFunc func(error) sentry.Level
+type ErrorLevelMapper func(error) sentry.Level
 
 var (
-	defaultErrorLevelFuncs = []ErrorLevelFunc{
-		ErrorIsFunc(context.DeadlineExceeded, sentry.LevelWarning),
-		ErrorIsFunc(context.Canceled, sentry.LevelWarning),
-		ErrorIsFunc(io.EOF, sentry.LevelWarning),
-		ErrorCauseTextContainsFunc("net/http: TLS handshake timeout", sentry.LevelWarning),
-		ErrorCauseTextContainsFunc("operation was canceled", sentry.LevelWarning),
-		ErrorCauseTextContainsFunc("EOF", sentry.LevelWarning),
+	defaultErrorLevelMappers = []ErrorLevelMapper{
+		ErrorIsLevel(context.DeadlineExceeded, sentry.LevelWarning),
+		ErrorIsLevel(context.Canceled, sentry.LevelWarning),
+		ErrorIsLevel(io.EOF, sentry.LevelWarning),
+		ErrorCauseTextContainsLevel("net/http: TLS handshake timeout", sentry.LevelWarning),
+		ErrorCauseTextContainsLevel("operation was canceled", sentry.LevelWarning),
+		ErrorCauseTextContainsLevel("EOF", sentry.LevelWarning),
 	}
 	defaultOptions = Options{
 		Tags: make(map[string]string),
@@ -47,7 +47,7 @@ var (
 			stringPrefix(reporter.HTTPRequestHeaderKeyPrefix),
 			stringPrefix(reporter.HTTPRequestQueryValuesKeyPrefix),
 		},
-		ErrorLevelFuncs: defaultErrorLevelFuncs,
+		ErrorLevelMappers: defaultErrorLevelMappers,
 	}
 )
 
@@ -69,9 +69,9 @@ func toStringMap(vs []string) map[string]struct{} {
 	return res
 }
 
-// ErrorIsFunc creates an ErrorLevelFunc of the passed level that checks if
+// ErrorIsLevel creates an ErrorLevelMapper of the passed level that checks if
 // reported errors are the same as the given sentinel error
-func ErrorIsFunc(sentinel error, level sentry.Level) ErrorLevelFunc {
+func ErrorIsLevel(sentinel error, level sentry.Level) ErrorLevelMapper {
 	return func(err error) sentry.Level {
 		if uerrors.Is(err, sentinel) {
 			return level
@@ -81,9 +81,9 @@ func ErrorIsFunc(sentinel error, level sentry.Level) ErrorLevelFunc {
 	}
 }
 
-// ErrorIsOfTypeFunc creates an ErrorLevelFunc of the passed level that checks
+// ErrorIsOfTypeLevel creates an ErrorLevelMapper of the passed level that checks
 // if reported errors are of the passed generic type
-func ErrorIsOfTypeFunc[T error](level sentry.Level) ErrorLevelFunc {
+func ErrorIsOfTypeLevel[T error](level sentry.Level) ErrorLevelMapper {
 	return func(err error) sentry.Level {
 		if uerrors.IsOfType[T](err) {
 			return level
@@ -93,9 +93,9 @@ func ErrorIsOfTypeFunc[T error](level sentry.Level) ErrorLevelFunc {
 	}
 }
 
-// ErrorCauseTextContainsFunc creates an ErrorLevelFunc of the passed level that checks
+// ErrorCauseTextContainsLevel creates an ErrorLevelMapper of the passed level that checks
 // if reported errors' cause's Error() text contains the passed string
-func ErrorCauseTextContainsFunc(errorText string, level sentry.Level) ErrorLevelFunc {
+func ErrorCauseTextContainsLevel(errorText string, level sentry.Level) ErrorLevelMapper {
 	return func(err error) sentry.Level {
 		rootCause := base.UnwrapAll(err).Error()
 
@@ -116,7 +116,7 @@ type Options struct {
 	TagWhitelist map[string]struct{}
 	TagBlacklist []func(string) bool
 
-	ErrorLevelFuncs []ErrorLevelFunc
+	ErrorLevelMappers []ErrorLevelMapper
 }
 
 func (o Options) client() (*sentry.Client, error) {
@@ -140,16 +140,16 @@ func WithTags(tags map[string]string) Option {
 	}
 }
 
-// AppendErrorLevelFuncs adds the passed funcs to the ErrorLevelFuncs of the Reporter
-func AppendErrorLevelFuncs(funcs ...ErrorLevelFunc) Option {
+// AppendErrorLevelMappers adds the passed funcs to the ErrorLevelMappers of the Reporter
+func AppendErrorLevelMappers(funcs ...ErrorLevelMapper) Option {
 	return func(opts *Options) {
-		opts.ErrorLevelFuncs = append(opts.ErrorLevelFuncs, funcs...)
+		opts.ErrorLevelMappers = append(opts.ErrorLevelMappers, funcs...)
 	}
 }
 
-// ReplaceErrorLevelFuncs replaces the ErrorLevelFuncs of the Reporter with the passed ones
-func ReplaceErrorLevelFuncs(funcs []ErrorLevelFunc) Option {
+// ReplaceErrorLevelMappers replaces the ErrorLevelMappers of the Reporter with the passed ones
+func ReplaceErrorLevelMappers(funcs []ErrorLevelMapper) Option {
 	return func(opts *Options) {
-		opts.ErrorLevelFuncs = funcs
+		opts.ErrorLevelMappers = funcs
 	}
 }

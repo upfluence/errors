@@ -224,9 +224,9 @@ func TestBuildEvent(t *testing.T) {
 			err:  &mockError{},
 			modifiers: []func(*Reporter){
 				func(r *Reporter) {
-					r.errorLevelFuncs = append(
-						r.errorLevelFuncs,
-						ErrorIsOfTypeFunc[*mockError](sentry.LevelDebug),
+					r.errorLevelMappers = append(
+						r.errorLevelMappers,
+						ErrorIsOfTypeLevel[*mockError](sentry.LevelDebug),
 					)
 				},
 			},
@@ -243,9 +243,9 @@ func TestBuildEvent(t *testing.T) {
 			err:  errors.Wrap(&mockError{}, "i am being mocked"),
 			modifiers: []func(*Reporter){
 				func(r *Reporter) {
-					r.errorLevelFuncs = append(
-						r.errorLevelFuncs,
-						ErrorIsOfTypeFunc[*mockError](sentry.LevelDebug),
+					r.errorLevelMappers = append(
+						r.errorLevelMappers,
+						ErrorIsOfTypeLevel[*mockError](sentry.LevelDebug),
 					)
 				},
 			},
