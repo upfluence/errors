@@ -15,16 +15,17 @@ import (
 
 type ErrorLevelMapper func(error) sentry.Level
 
-var (
-	defaultErrorLevelMappers = []ErrorLevelMapper{
-		ErrorIsLevel(context.DeadlineExceeded, sentry.LevelWarning),
-		ErrorIsLevel(context.Canceled, sentry.LevelWarning),
-		ErrorIsLevel(io.EOF, sentry.LevelWarning),
-		ErrorCauseTextContainsLevel("net/http: TLS handshake timeout", sentry.LevelWarning),
-		ErrorCauseTextContainsLevel("operation was canceled", sentry.LevelWarning),
-		ErrorCauseTextContainsLevel("EOF", sentry.LevelWarning),
-	}
-	defaultOptions = Options{
+var defaultErrorLevelMappers = []ErrorLevelMapper{
+	ErrorIsLevel(context.DeadlineExceeded, sentry.LevelWarning),
+	ErrorIsLevel(context.Canceled, sentry.LevelWarning),
+	ErrorIsLevel(io.EOF, sentry.LevelWarning),
+	ErrorCauseTextContainsLevel("net/http: TLS handshake timeout", sentry.LevelWarning),
+	ErrorCauseTextContainsLevel("operation was canceled", sentry.LevelWarning),
+	ErrorCauseTextContainsLevel("EOF", sentry.LevelWarning),
+}
+
+func defaultOptions() Options {
+	return Options{
 		Tags: make(map[string]string),
 		SentryOptions: sentry.ClientOptions{
 			Dsn:            os.Getenv("SENTRY_DSN"),
@@ -49,7 +50,7 @@ var (
 		},
 		ErrorLevelMappers: defaultErrorLevelMappers,
 	}
-)
+}
 
 func stringEqual(x string) func(string) bool {
 	return func(y string) bool { return x == y }

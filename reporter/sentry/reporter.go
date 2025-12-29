@@ -37,7 +37,7 @@ type Reporter struct {
 
 // NewReporter creates a new Sentry reporter with the given options.
 func NewReporter(os ...Option) (*Reporter, error) {
-	var opts = defaultOptions
+	var opts = defaultOptions()
 
 	for _, o := range os {
 		o(&opts)
