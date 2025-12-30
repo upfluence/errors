@@ -1,6 +1,7 @@
 package sentry
 
 import (
+	"context"
 	"io"
 	"regexp"
 	"testing"
@@ -12,6 +13,10 @@ import (
 	"github.com/upfluence/errors/recovery"
 	"github.com/upfluence/errors/reporter"
 )
+
+type mockError struct{}
+
+func (*mockError) Error() string { return "mock" }
 
 func TestBuildEvent(t *testing.T) {
 	for _, tt := range []struct {
@@ -161,6 +166,95 @@ func TestBuildEvent(t *testing.T) {
 					},
 				)
 				assert.Equal(t, evt.Tags, map[string]string{"foo": "bar", "domain": "github.com/upfluence/errors/reporter/sentry"})
+			},
+		},
+		{
+			name:      "simple sentinel error with severity func",
+			err:       io.EOF,
+			modifiers: []func(*Reporter){},
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(
+					t,
+					sentry.LevelWarning,
+					evt.Level,
+				)
+			},
+		},
+		{
+			name:      "wrapped sentinel error with severity func",
+			err:       errors.Wrap(context.DeadlineExceeded, "it took too long, boss"),
+			modifiers: []func(*Reporter){},
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(
+					t,
+					sentry.LevelWarning,
+					evt.Level,
+				)
+			},
+		},
+		{
+			name:      "simple text error with severity func",
+			err:       errors.New("net/http: TLS handshake timeout with extra bells and whistles"),
+			modifiers: []func(*Reporter){},
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(
+					t,
+					sentry.LevelWarning,
+					evt.Level,
+				)
+			},
+		},
+		{
+			name: "wrapped text error with severity func",
+			err: errors.Wrap(
+				errors.New("net/http: TLS handshake timeout with extra bells and whistles"),
+				"more bells and whistles",
+			),
+			modifiers: []func(*Reporter){},
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(
+					t,
+					sentry.LevelWarning,
+					evt.Level,
+				)
+			},
+		},
+		{
+			name: "simple error type",
+			err:  &mockError{},
+			modifiers: []func(*Reporter){
+				func(r *Reporter) {
+					r.levelMappers = append(
+						r.levelMappers,
+						ErrorIsOfTypeLevel[*mockError](sentry.LevelDebug),
+					)
+				},
+			},
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(
+					t,
+					sentry.LevelDebug,
+					evt.Level,
+				)
+			},
+		},
+		{
+			name: "wrapped error type",
+			err:  errors.Wrap(&mockError{}, "i am being mocked"),
+			modifiers: []func(*Reporter){
+				func(r *Reporter) {
+					r.levelMappers = append(
+						r.levelMappers,
+						ErrorIsOfTypeLevel[*mockError](sentry.LevelDebug),
+					)
+				},
+			},
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(
+					t,
+					sentry.LevelDebug,
+					evt.Level,
+				)
 			},
 		},
 	} {
