@@ -5,7 +5,11 @@
 // contextual information including request details, user information, and custom tags.
 package reporter
 
-import "io"
+import (
+	"io"
+
+	"github.com/upfluence/log/record"
+)
 
 // Common tag keys for error reporting metadata.
 const (
@@ -42,6 +46,9 @@ type ReportOptions struct {
 	Tags map[string]interface{}
 
 	Depth int
+
+	// Add the record level that the logger used
+	ReportedLevel *record.Level
 }
 
 // Reporter is the interface for error reporting implementations.

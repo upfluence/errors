@@ -12,6 +12,8 @@ import (
 	"github.com/upfluence/errors"
 	"github.com/upfluence/errors/recovery"
 	"github.com/upfluence/errors/reporter"
+	"github.com/upfluence/log/record"
+	"github.com/upfluence/pkg/pointers"
 )
 
 type mockError struct{}
@@ -253,6 +255,50 @@ func TestBuildEvent(t *testing.T) {
 				assert.Equal(
 					t,
 					sentry.LevelDebug,
+					evt.Level,
+				)
+			},
+		},
+		{
+			name: "wrapped error type with reported level Error",
+			err:  errors.Wrap(&mockError{}, "i am being mocked"),
+			modifiers: []func(*Reporter){
+				func(r *Reporter) {
+					r.levelMappers = append(
+						r.levelMappers,
+						ErrorIsOfTypeLevel[*mockError](sentry.LevelDebug),
+					)
+				},
+			},
+			ropts: reporter.ReportOptions{
+				ReportedLevel: pointers.Ptr(record.Error),
+			},
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(
+					t,
+					sentry.LevelDebug,
+					evt.Level,
+				)
+			},
+		},
+		{
+			name: "wrapped error type with reported level Warning",
+			err:  errors.Wrap(&mockError{}, "i am being mocked"),
+			modifiers: []func(*Reporter){
+				func(r *Reporter) {
+					r.levelMappers = append(
+						r.levelMappers,
+						ErrorIsOfTypeLevel[*mockError](sentry.LevelDebug),
+					)
+				},
+			},
+			ropts: reporter.ReportOptions{
+				ReportedLevel: pointers.Ptr(record.Warning),
+			},
+			evtfn: func(t *testing.T, evt *sentry.Event) {
+				assert.Equal(
+					t,
+					sentry.LevelWarning,
 					evt.Level,
 				)
 			},
