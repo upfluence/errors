@@ -177,7 +177,7 @@ var reporterToSentryLevel = map[record.Level]sentry.Level{
 }
 
 func (r *Reporter) computeLevel(err error, opts reporter.ReportOptions) sentry.Level {
-	// we suppose that the programmer knows best: if an error is loged as warning,
+	// we suppose that the programmer knows best: if an error is logged as warning,
 	// it is a warning, in spite of the level mappers.
 	// as Error is the default level, it is ignored for this process
 	if opts.ReportedLevel != nil && *opts.ReportedLevel != record.Error {
