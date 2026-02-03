@@ -22,6 +22,7 @@ import (
 	"github.com/upfluence/errors/reporter"
 	"github.com/upfluence/errors/stacktrace"
 	"github.com/upfluence/errors/tags"
+	"github.com/upfluence/log/record"
 )
 
 // Reporter is a Sentry error reporter implementation.
@@ -137,7 +138,7 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 
 	evt := sentry.NewEvent()
 
-	evt.Level = r.computeLevel(err)
+	evt.Level = r.computeLevel(err, opts)
 	evt.Timestamp = time.Now()
 	evt.Message = err.Error()
 	evt.Transaction = transactionName(errorTags)
@@ -166,7 +167,25 @@ func (r *Reporter) buildEvent(err error, opts reporter.ReportOptions) *sentry.Ev
 	return evt
 }
 
-func (r *Reporter) computeLevel(err error) sentry.Level {
+var reporterToSentryLevel = map[record.Level]sentry.Level{
+	record.Debug:   sentry.LevelDebug,
+	record.Info:    sentry.LevelInfo,
+	record.Notice:  sentry.LevelInfo,
+	record.Warning: sentry.LevelWarning,
+	record.Error:   sentry.LevelError,
+	record.Fatal:   sentry.LevelFatal,
+}
+
+func (r *Reporter) computeLevel(err error, opts reporter.ReportOptions) sentry.Level {
+	// we suppose that the programmer knows best: if an error is logged as warning,
+	// it is a warning, in spite of the level mappers.
+	// as Error is the default level, it is ignored for this process
+	if opts.ReportedLevel != nil && *opts.ReportedLevel != record.Error {
+		if sl, ok := reporterToSentryLevel[*opts.ReportedLevel]; ok {
+			return sl
+		}
+	}
+
 	for _, errFunc := range r.levelMappers {
 		if level := errFunc(err); level != "" {
 			return level
