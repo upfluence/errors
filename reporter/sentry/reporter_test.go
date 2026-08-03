@@ -48,7 +48,7 @@ func TestBuildEvent(t *testing.T) {
 					map[string]string{"domain": "github.com/upfluence/errors/reporter/sentry"},
 					evt.Tags,
 				)
-				assert.Equal(t, map[string]map[string]interface{}{}, evt.Contexts)
+				assert.Equal(t, map[string]sentry.Context{}, evt.Contexts)
 			},
 			ropts: reporter.ReportOptions{Depth: 1},
 		},
@@ -118,12 +118,14 @@ func TestBuildEvent(t *testing.T) {
 			evtfn: func(t *testing.T, evt *sentry.Event) {
 				assert.Equal(
 					t,
-					evt.Extra,
-					map[string]interface{}{
-						"foo":         "bar",
-						"biz":         "buz",
-						"error_types": []string{"*stacktrace.withFrame", "*tags.withTags", "*opaque.opaqueError"},
+					map[string]sentry.Context{
+						"app": {
+							"foo":         "bar",
+							"biz":         "buz",
+							"error_types": []string{"*stacktrace.withFrame", "*tags.withTags", "*opaque.opaqueError"},
+						},
 					},
+					evt.Contexts,
 				)
 				assert.Equal(t, evt.Tags, map[string]string{"domain": "github.com/upfluence/errors/reporter/sentry"})
 			},
@@ -137,12 +139,14 @@ func TestBuildEvent(t *testing.T) {
 			evtfn: func(t *testing.T, evt *sentry.Event) {
 				assert.Equal(
 					t,
-					evt.Extra,
-					map[string]interface{}{
-						"foo":         "bar",
-						"biz":         "buz",
-						"error_types": []string{"*stacktrace.withFrame", "*tags.withTags", "*opaque.opaqueError"},
+					map[string]sentry.Context{
+						"app": {
+							"foo":         "bar",
+							"biz":         "buz",
+							"error_types": []string{"*stacktrace.withFrame", "*tags.withTags", "*opaque.opaqueError"},
+						},
 					},
+					evt.Contexts,
 				)
 				assert.Equal(t, evt.Tags, map[string]string{"domain": "github.com/upfluence/errors/reporter/sentry"})
 			},
@@ -161,11 +165,13 @@ func TestBuildEvent(t *testing.T) {
 			evtfn: func(t *testing.T, evt *sentry.Event) {
 				assert.Equal(
 					t,
-					evt.Extra,
-					map[string]interface{}{
-						"biz":         "buz",
-						"error_types": []string{"*stacktrace.withFrame", "*tags.withTags", "*opaque.opaqueError"},
+					map[string]sentry.Context{
+						"app": {
+							"biz":         "buz",
+							"error_types": []string{"*stacktrace.withFrame", "*tags.withTags", "*opaque.opaqueError"},
+						},
 					},
+					evt.Contexts,
 				)
 				assert.Equal(t, evt.Tags, map[string]string{"foo": "bar", "domain": "github.com/upfluence/errors/reporter/sentry"})
 			},

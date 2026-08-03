@@ -101,7 +101,23 @@ func (r *Reporter) appendTag(k string, v interface{}, evt *sentry.Event) {
 		}
 	}
 
-	evt.Extra[k] = v
+	vs := strings.Split(k, ".")
+	ctxKey := "app"
+
+	if len(vs) > 1 {
+		ctxKey = vs[0]
+		k = strings.Join(vs[1:], ".")
+	}
+
+	if evt.Contexts == nil {
+		evt.Contexts = make(map[string]sentry.Context, 1)
+	}
+
+	if evt.Contexts[ctxKey] == nil {
+		evt.Contexts[ctxKey] = sentry.Context{}
+	}
+
+	evt.Contexts[ctxKey][k] = v
 }
 
 func buildErrorTypeChain(err error) []string {
